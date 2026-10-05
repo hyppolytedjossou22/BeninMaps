@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f5ed">
+  <meta name="description" content="Trouvez votre position et explorez les villes et quartiers du Bénin avec BeninMaps.">
+  <title>BeninMaps — Explorer le Bénin</title>
+
+  <!-- Polices Google : preconnect prépare la connexion pour charger plus vite. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Feuille de style de Leaflet (la bibliothèque de carte). integrity = vérifie que le fichier n'a pas été modifié. -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <!-- Ton propre fichier de style. -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+
+    <!-- <aside> = contenu secondaire. aria-label décrit la zone pour les lecteurs d'écran. -->
+    <aside class="sidebar" aria-label="Recherche et informations de position">
+
+      <!-- ----- Logo et étiquette du pays ----- -->
+      <header class="brand-row">
+        <a class="brand" href="#" aria-label="BeninMaps, accueil">
+          <!-- Les 3 barres du logo (dessinées en CSS). aria-hidden="true" = ignoré par les lecteurs d'écran (décoration). -->
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span>benin<span class="brand-light">maps</span></span>
+        </a>
+        <span class="country-tag"><span class="flag" aria-hidden="true"></span> BÉNIN</span>
+      </header>
+
+      <!-- ----- Titre d'accueil ----- -->
+      <!-- aria-labelledby relie la section à son titre (id="page-title"). -->
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">VOTRE REPÈRE AU BÉNIN</p>
+        <h1 id="page-title">Où êtes-vous&nbsp;?</h1> <!-- &nbsp; = espace insécable : le ? ne passe jamais seul à la ligne -->
+        <p class="intro-copy">Repérez votre position, une ville ou une adresse partout au Bénin.</p>
+      </section>
+
+      <!-- ----- Recherche d'un lieu ----- -->
+      <!-- app.js écoute l'envoi de ce formulaire (id="search-form") pour lancer la recherche. -->
+      <form class="search-form" id="search-form" role="search">
+        <!-- Label invisible mais lu par les lecteurs d'écran (classe .visually-hidden). for="place-search" le relie au champ. -->
+        <label class="visually-hidden" for="place-search">Rechercher une ville, un quartier ou une adresse</label>
+        <!-- type="search" : champ de recherche. autocomplete="off" : pas de suggestions du navigateur. -->
+        <input id="place-search" name="q" type="search" placeholder="Ville, quartier, adresse…" autocomplete="off">
+        <!-- type="submit" : un clic (ou la touche Entrée) envoie le formulaire. -->
+        <button class="search-button" type="submit" aria-label="Rechercher">Rechercher</button>
+      </form>
+      <!-- Message de statut : app.js y écrit "Recherche en cours…", etc. aria-live="polite" = les lecteurs d'écran annoncent le changement. -->
+      <p class="search-hint" id="search-status" aria-live="polite">Ex. : Cotonou, Porto-Novo, Parakou</p>
+
+      <!-- ----- Bouton de localisation ----- -->
+      <!-- type="button" : ne soumet aucun formulaire. app.js l'écoute avec son id. -->
+      <button class="locate-button" id="locate-button" type="button">
+        <span class="locate-icon" aria-hidden="true">◎</span>
+        <span>Me localiser</span>
+        <span class="button-arrow" aria-hidden="true">↗</span>
+      </button>
+
+      <!-- ----- Panneau du trajet ----- -->
+      <!-- Le bouton de trajet déclenche la localisation GPS avant le calcul de l’itinéraire. -->
+      <section class="route-panel" aria-labelledby="route-title">
+        <p class="eyebrow">DÉPLACEMENT</p>
+        <h2 id="route-title">Où souhaitez-vous aller ?</h2>
+        <form class="route-form" id="route-form">
+          <label class="visually-hidden" for="route-destination">Destination au Bénin</label>
+          <!-- required : le navigateur refuse l'envoi si le champ est vide. -->
+          <input id="route-destination" name="destination" type="search" placeholder="Ville, quartier, adresse…" autocomplete="off" required>
+          <button class="route-button" type="submit">Tracer le trajet</button>
+        </form>
+        <!-- Messages d'état du trajet, modifiés par app.js. -->
+        <p class="route-status" id="route-status" aria-live="polite">Le trajet partira de votre position GPS.</p>
+        <!-- hidden : ce bloc est caché au départ. app.js l'affiche une fois le trajet calculé. -->
+        <div class="route-guidance" id="route-guidance" hidden>
+          <p class="route-summary" id="route-summary"></p> <!-- vide au départ : app.js écrit la distance et la durée -->
+          <div class="guidance-controls">
+            <button class="guidance-button" id="start-guidance" type="button">Démarrer le guidage vocal</button>
+            <!-- Le bouton "Arrêter" est caché tant que le guidage n'a pas démarré. -->
+            <button class="guidance-stop" id="stop-guidance" type="button" hidden>Arrêter</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ----- Panneau de la position actuelle ----- -->
+      <section class="location-panel" aria-labelledby="location-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">POSITION ACTUELLE</p>
+            <h2 id="location-title">Votre emplacement</h2>
+          </div>
+          <span class="location-pulse" aria-hidden="true"></span> <!-- petit point décoratif -->
+        </div>
+        <!-- Ces deux textes changent selon la situation (localisation en cours, lieu trouvé, erreur...). -->
+        <p class="location-name" id="location-name">En attente de votre position</p>
+        <p class="location-detail" id="location-detail">Appuyez sur « Me localiser » pour obtenir vos coordonnées.</p>
+        <!-- Coordonnées GPS : cachées jusqu'à ce que l'utilisateur soit localisé. -->
+        <div class="coordinates" id="coordinates" hidden>
+          <div><span>LATITUDE</span><strong id="latitude">—</strong></div>
+          <div><span>LONGITUDE</span><strong id="longitude">—</strong></div>
+        </div>
+        <p class="accuracy" id="accuracy" hidden></p> <!-- précision du GPS, cachée au départ -->
+      </section>
+
+      <!-- ----- Liste des villes principales ----- -->
+      <section class="quick-places" aria-labelledby="places-title">
+        <div class="section-heading compact-heading">
+          <div>
+            <p class="eyebrow">POUR EXPLORER</p>
+            <h2 id="places-title">Villes principales</h2>
+          </div>
+        </div>
+        <div class="place-list">
+          <!-- Chaque bouton stocke ses informations dans des attributs data-* :
+               data-lat (latitude), data-lon (longitude), data-name (nom).
+               app.js les lit avec button.dataset.lat, etc.
+               Pour ajouter une ville, copie un bloc et change ces 3 valeurs et les textes. -->
+          <button class="place-item" type="button" data-lat="6.3703" data-lon="2.3912" data-name="Cotonou">
+            <span class="place-dot dot-red"></span><span>Cotonou</span><span class="place-region">Littoral</span>
+          </button>
+          <button class="place-item" type="button" data-lat="6.4969" data-lon="2.6289" data-name="Porto-Novo">
+            <span class="place-dot dot-green"></span><span>Porto-Novo</span><span class="place-region">Ouémé</span>
+          </button>
+          <button class="place-item" type="button" data-lat="9.3372" data-lon="2.6303" data-name="Parakou">
+            <span class="place-dot dot-yellow"></span><span>Parakou</span><span class="place-region">Borgou</span>
+          </button>
+          <button class="place-item" type="button" data-lat="10.3042" data-lon="1.3796" data-name="Natitingou">
+            <span class="place-dot dot-blue"></span><span>Natitingou</span><span class="place-region">Atacora</span>
+          </button>
+          <button class="place-item" type="button" data-lat="6.4485" data-lon="2.3556" data-name="Abomey-Calavi">
+          <span class="place-dot dot-green"></span><span>Abomey-Calavi</span><span class="place-region">Atlantique</span>
+          </button>
+          <button class="place-item" type="button" data-lat="6.6386" data-lon="1.7167" data-name="Lokossa">
+          <span class="place-dot dot-red"></span><span>Lokossa</span><span class="place-region">Mono</span>
+          </button>
+          <button class="place-item" type="button" data-lat="6.3716" data-lon="2.0763" data-name="Ouidah">
+          <span class="place-dot dot-green"></span><span>Ouidah</span><span class="place-region">Atlantique</span>
+          </button>
+          <button class="place-item" type="button" data-lat="7.17826" data-lon="2.0667" data-name="Bohicon">
+          <span class="place-dot dot-green"></span><span>Bohicon</span><span class="place-region">Zou</span> 
+          </button>
+          <button class="place-item" type="button" data-lat="9.7085" data-lon="1.666" data-name="Djougou">
+          <span class="place-dot dot-green"></span><span>Djougou</span><span class="place-region">Donga</span> 
+          </button>
+          <button class="place-item" type="button" data-lat="11.1305" data-lon="2.9326" data-name="Kandi">
+          <span class="place-dot dot-green"></span><span>Kandi</span><span class="place-region">Alibori</span> 
+          </button>
+        </div>
+      </section>
+
+      <!-- ----- Pied du panneau ----- -->
+      <footer class="sidebar-footer">
+        <span class="footer-dot" aria-hidden="true"></span>
+        <span>La carte se déplace avec vous.</span>
+        <!-- target="_blank" : ouvre dans un nouvel onglet. rel="noreferrer" : sécurité, ne transmet pas ta page d'origine. -->
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">Données cartographiques</a>
+      </footer>
+    </aside>
+
+    <!-- ==================== COLONNE DE DROITE : LA CARTE ==================== -->
+    <section class="map-area" aria-label="Carte interactive du Bénin">
+      <!-- Étiquettes affichées par-dessus la carte, en haut. -->
+      <div class="map-topline">
+        <span class="map-status"><span class="status-dot"></span> CARTE DU BÉNIN</span>
+        <!-- Coordonnées du centre de la carte, mises à jour par app.js quand la carte bouge. -->
+        <span class="map-coordinates" id="map-coordinates">6.4969° N&nbsp;&nbsp; 2.6289° E</span>
+      </div>
+      <!-- LE conteneur de la carte : app.js (L.map('map')) dessine la carte Leaflet ici. Il est vide dans le HTML. -->
+      <div id="map" role="application" aria-label="Carte interactive. Utilisez les flèches pour vous déplacer et les touches plus ou moins pour zoomer."></div>
+      <!-- Nom du lieu affiché en bas à gauche de la carte. -->
+      <div class="map-caption"><span class="caption-mark" aria-hidden="true"></span><span id="map-caption-text">Porto-Novo, Bénin</span></div>
+      <div class="map-zoom-hint" aria-hidden="true">ZOOMEZ POUR EXPLORER</div>
+    </section>
+  </main>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <!-- Les scripts sont placés à la FIN du <body> : le HTML ci-dessus existe déjà
+       quand app.js le cherche avec getElementById. L'ordre est important :
+       1) Leaflet d'abord (il définit l'objet "L"), 2) puis app.js qui utilise "L". -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

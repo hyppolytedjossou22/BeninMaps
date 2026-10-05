@@ -1,0 +1,246 @@
+/* ==========================================================
+   BeninMaps — style.css
+   Ce fichier gère l'apparence de la page : couleurs, tailles,
+   positions et adaptation au téléphone.
+   Une règle CSS s'écrit :  sélecteur { propriété: valeur; }
+   - le sélecteur dit QUOI styler (.classe, #id, balise)
+   - les propriétés disent COMMENT
+   ========================================================== */
+
+/* ---------- 1. POLICES ---------- */
+/* Charge les polices Google "DM Sans" et "Manrope".
+   (index.html les charge déjà avec <link> : cette ligne est donc en double.) */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
+
+/* ---------- 2. VARIABLES ET STYLE GLOBAL ---------- */
+/* :root = toute la page. C'est ici qu'on définit les valeurs par défaut
+   et les "variables CSS" (--nom) réutilisables partout avec var(--nom). */
+:root {
+  font-family: 'DM Sans', sans-serif; /* sans-serif = police de secours */
+  color: #0c0b0c; /* Couleur du texte principal. */
+  background: #e0ed82; /* Fond vert clair visible autour de l’application. */
+  font-synthesis: none; /* évite le faux gras / faux italique */
+  text-rendering: optimizeLegibility;
+  /* Palette principale : surfaces, textes, accent et séparateurs. */
+  --paper: #f4f5ed; /* Fond du panneau latéral. */
+  --ink: #20251f; /* Texte et titres principaux. */
+  --muted: #777d71; /* Texte secondaire et indications. */
+  --green: #49ce8e; /* Accent de marque et éléments actifs. */
+  --line: #e2f2b8; /* Bordures et lignes de séparation. */
+  --display: 'Manrope', sans-serif; /* police des titres */
+}
+
+/* * = tous les éléments. border-box : la largeur inclut le padding et la bordure,
+   ce qui rend les calculs de taille beaucoup plus simples. */
+* { box-sizing: border-box; }
+/* La page occupe tout l'écran, sans marge. */
+html, body { width: 100%; height: 100%; margin: 0; }
+/* overflow: hidden = pas de barre de défilement sur la page (la carte remplit l'écran). */
+body { min-width: 320px; overflow: hidden; }
+/* Les boutons et champs ne prennent pas la police du site par défaut : on la leur donne. */
+button, input { font: inherit; }
+button { color: inherit; }
+
+/* ---------- 3. STRUCTURE : PANNEAU + CARTE ---------- */
+/* .app-shell = le conteneur principal. "display: grid" crée 2 colonnes :
+   390px pour le panneau latéral, et le reste (minmax(0, 1fr)) pour la carte. */
+.app-shell {
+  display: grid;
+  grid-template-columns: 390px minmax(0, 1fr);
+  width: 100%;
+  height: 100dvh; /* dvh = hauteur visible de l'écran (tient compte de la barre du navigateur mobile) */
+  min-height: 560px;
+  background: var(--paper);
+}
+
+/* Panneau latéral gauche : une colonne verticale (flex-direction: column). */
+.sidebar {
+  position: relative;
+  z-index: 500; /* passe au-dessus de la carte en cas de chevauchement */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 27px 30px 20px; /* haut, côtés, bas */
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  overflow-y: auto; /* le panneau défile s'il est trop long */
+}
+/* Plusieurs éléments partagent la même disposition : une ligne
+   avec le contenu aligné verticalement et écarté aux deux extrémités. */
+.brand-row, .section-heading, .sidebar-footer, .place-item, .map-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ---------- 4. LOGO ET EN-TÊTE ---------- */
+.brand-row { margin-bottom: 48px; }
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px; /* espace entre le logo et le texte */
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-decoration: none; /* enlève le soulignement du lien */
+}
+.brand-light { color: var(--green); font-weight: 600; } /* "maps" en vert */
+/* Le logo : 3 barres penchées de hauteurs différentes. */
+.brand-mark { display: flex; align-items: end; gap: 3px; width: 23px; height: 24px; }
+.brand-mark span { display: block; width: 5px; border-radius: 4px 4px 2px 2px; background: var(--green); transform: skew(-19deg); }
+.brand-mark span:nth-child(1) { height: 14px; }
+.brand-mark span:nth-child(2) { height: 21px; background: #e6b643; } /* Jaune du signe de marque. */
+.brand-mark span:nth-child(3) { height: 17px; background: #d85b46; } /* Rouge du signe de marque. */
+/* Étiquette "BÉNIN" avec le mini drapeau. */
+.country-tag { display: flex; align-items: center; gap: 7px; color: #6d7469; font-size: 10px; font-weight: 700; letter-spacing: 1.1px; }
+/* Drapeau du Bénin dessiné en CSS : bande verte à gauche, puis jaune en haut et rouge en bas
+   (linear-gradient coupe le fond en deux couleurs à 50 %). */
+.flag { width: 15px; height: 10px; border-left: 5px solid #16834b; background: linear-gradient(to bottom, #f5d549 0 50%, #d84a3c 50%); }
+
+/* ---------- 5. TITRES ET INTRODUCTION ---------- */
+/* .eyebrow = petit texte en majuscules au-dessus des titres. */
+.eyebrow { margin: 0 0 9px; color: var(--green); font-size: 9px; font-weight: 700; letter-spacing: 1.6px; }
+.intro { margin-bottom: 23px; }
+h1, h2, p { margin-top: 0; }
+h1 { margin-bottom: 10px; font-family: var(--display); font-size: 30px; font-weight: 800; line-height: 1.2; letter-spacing: 0; }
+.intro-copy { max-width: 290px; margin-bottom: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+/* ---------- 6. BARRE DE RECHERCHE ---------- */
+/* Le formulaire ressemble à un seul champ blanc : l'input et le bouton sont côte à côte. */
+.search-form { display: flex; min-height: 49px; padding: 4px; border: 1px solid #dfe2d8; border-radius: 5px; background: #fff; box-shadow: 0 3px 10px #303d2010; }
+/* :focus-within = quand un élément À L'INTÉRIEUR a le focus (on tape dans le champ). */
+.search-form:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px #12824b1b; }
+/* Le champ lui-même est transparent et sans bordure, pour se fondre dans le formulaire. */
+.search-form input { width: 100%; min-width: 0; padding: 0 9px; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 12px; }
+.search-form input::placeholder { color: #9b9f96; } /* texte d'exemple grisé */
+.search-button { flex: 0 0 auto; padding: 0 13px; border: 0; border-radius: 3px; background: var(--green); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .18s ease; }
+.search-button:hover { background: #0b6a3b; } /* :hover = quand la souris passe dessus */
+.search-hint { min-height: 18px; margin: 8px 1px 15px; color: #898e84; font-size: 10px; }
+
+/* ---------- 7. BOUTON « ME LOCALISER » ---------- */
+/* transition : l'effet de survol est animé en douceur. */
+.locate-button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 0 13px; border: 1px solid #cfd8cf; border-radius: 4px; background: #eaf0e8; color: #195d38; text-align: left; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .18s, transform .18s; }
+.locate-button:hover { transform: translateY(-1px); background: #dceadd; } /* monte d'1 pixel */
+.locate-button:disabled { cursor: wait; opacity: .7; } /* pendant la localisation (voir app.js) */
+.locate-icon { font-size: 21px; line-height: 1; }
+.button-arrow { margin-left: auto; font-size: 17px; } /* margin-left: auto pousse la flèche à droite */
+
+/* ---------- 8. PANNEAU DU TRAJET ---------- */
+/* Présentation du champ destination et des commandes de guidage. */
+.route-panel { margin-top: 18px; padding: 16px; border: 1px solid #dfe2d8; border-radius: 4px; background: #fff; }
+.route-panel .eyebrow { margin-bottom: 5px; } /* ".route-panel .eyebrow" = les .eyebrow DANS .route-panel */
+.route-panel h2 { margin-bottom: 12px; }
+.route-form { display: flex; flex-wrap: wrap; gap: 7px; }
+.route-form input { width: 100%; min-width: 0; min-height: 40px; padding: 0 10px; border: 1px solid #dfe2d8; border-radius: 3px; color: var(--ink); font-size: 11px; }
+/* Les 3 boutons du panneau partagent le même style vert foncé. */
+.route-button, .guidance-button, .guidance-stop { min-height: 38px; padding: 0 11px; border: 0; border-radius: 3px; background: #195d38; color: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
+.route-button { width: 100%; }
+.route-button:hover, .guidance-button:hover { background: #0b6a3b; }
+.route-button:disabled, .guidance-button:disabled { cursor: wait; opacity: .65; }
+.route-status, .route-summary { margin: 9px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.route-summary { margin: 0 0 10px; color: var(--ink); font-weight: 700; } /* remplace les valeurs de la règle précédente */
+.guidance-controls { display: flex; gap: 7px; }
+.guidance-button { flex: 1; } /* flex: 1 = prend toute la place disponible */
+.guidance-stop { border: 1px solid #dfe2d8; background: #fff; color: #50574c; } /* bouton "Arrêter" : style clair */
+.guidance-stop:hover { background: #f2f4ec; }
+
+/* ---------- 9. PANNEAU « VOTRE EMPLACEMENT » ---------- */
+.location-panel { margin-top: 27px; padding: 17px 16px 15px; border: 1px solid #e1e4d9; border-radius: 4px; background: #fffefa; }
+.section-heading { align-items: flex-start; }
+.location-panel .eyebrow, .quick-places .eyebrow { margin-bottom: 5px; }
+h2 { margin-bottom: 0; font-family: var(--display); font-size: 14px; font-weight: 800; letter-spacing: 0; }
+/* Petit point gris (box-shadow crée le halo autour). */
+.location-pulse { width: 8px; height: 8px; margin: 8px 2px 0 10px; border-radius: 50%; background: #d4d7ce; box-shadow: 0 0 0 4px #f0f1eb; }
+.location-name { margin: 17px 0 4px; font-size: 12px; font-weight: 700; }
+.location-detail { margin-bottom: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+/* Latitude et longitude côte à côte : grille de 2 colonnes égales (1fr 1fr). */
+.coordinates { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.coordinates > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 8px; border-radius: 3px; background: #f2f4ec; }
+.coordinates span { color: #83897c; font-size: 8px; font-weight: 700; letter-spacing: 1px; }
+.coordinates strong { overflow-wrap: anywhere; font-family: var(--display); font-size: 11px; }
+.accuracy { margin: 9px 0 0; color: #70766c; font-size: 10px; }
+/* Règle essentielle : tout élément avec l'attribut "hidden" disparaît.
+   !important force cette règle, même si une autre dit display: flex.
+   C'est ce qui fait fonctionner "element.hidden = true" dans app.js. */
+[hidden] { display: none !important; }
+
+/* ---------- 10. LISTE DES VILLES PRINCIPALES ---------- */
+.quick-places { margin-top: 28px; }
+.compact-heading { margin-bottom: 10px; }
+.place-list { border-top: 1px solid var(--line); }
+.place-item { justify-content: flex-start; gap: 10px; width: 100%; min-height: 39px; padding: 0 3px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; font-size: 11px; cursor: pointer; transition: padding .16s ease, color .16s ease; }
+.place-item:hover { padding-left: 8px; color: var(--green); } /* le texte glisse vers la droite au survol */
+.place-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; } /* flex: 0 0 7px = taille fixe */
+/* Couleurs des points (les noms de classes ne correspondent pas aux couleurs réelles). */
+.dot-red { background: #e1b13c; } /* Cotonou. */
+.dot-green { background: #17834c; } /* Porto-Novo. */
+.dot-yellow { background: #d75242; } /* Parakou. */
+.dot-blue { background: #437287; } /* Natitingou. */
+.place-region { margin-left: auto; color: #c68fca; font-size: 9px; } /* région alignée à droite */
+
+/* ---------- 11. PIED DU PANNEAU ---------- */
+/* margin-top: auto pousse le pied tout en bas du panneau. */
+.sidebar-footer { justify-content: flex-start; flex-wrap: wrap; gap: 7px; margin-top: auto; padding-top: 22px; color: #858a80; font-size: 9px; }
+.footer-dot, .status-dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: var(--green); }
+.sidebar-footer a { width: 100%; padding-left: 13px; color: #6a7163; text-decoration: underline; text-decoration-color: #c9cec2; text-underline-offset: 3px; }
+.sidebar-footer a:hover { color: var(--green); }
+
+/* ---------- 12. ZONE DE LA CARTE ---------- */
+.map-area { position: relative; min-width: 0; min-height: 0; background: #90a094; }
+/* position: absolute + inset: 0 = la carte remplit toute .map-area (haut, bas, gauche, droite à 0). */
+#map { position: absolute; inset: 0; z-index: 1; background: #c1cfc5; }
+/* Les étiquettes par-dessus la carte ont un z-index plus grand (400) pour rester visibles. */
+.map-topline { position: absolute; z-index: 400; top: 20px; left: 20px; right: 20px; pointer-events: none; } /* pointer-events: none = les clics traversent vers la carte */
+.map-status, .map-coordinates { display: inline-flex; align-items: center; gap: 8px; min-height: 31px; padding: 0 11px; border: 1px solid #e5e7dd; border-radius: 3px; background: #fffefaed; color: #50574c; font-size: 9px; font-weight: 700; letter-spacing: 1px; box-shadow: 0 2px 10px #25352412; }
+.map-coordinates { font-weight: 600; letter-spacing: .2px; }
+.map-caption { position: absolute; z-index: 400; bottom: 22px; left: 20px; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 40px); padding: 10px 13px; border: 1px solid #e5e7dd; border-radius: 3px; background: #fffefaed; color: #30372e; font-size: 11px; font-weight: 700; box-shadow: 0 2px 10px #25352412; }
+.caption-mark { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #d75242; box-shadow: 0 0 0 3px #d7524229; } /* Repère rouge du lieu affiché. */
+.map-zoom-hint { position: absolute; z-index: 400; right: 19px; bottom: 27px; color: #4e5a51; font-size: 8px; font-weight: 700; letter-spacing: 1.4px; pointer-events: none; }
+
+/* ---------- 13. PERSONNALISATION DE LEAFLET ---------- */
+/* Ces classes (.leaflet-...) viennent de la bibliothèque Leaflet : on change son apparence
+   avec !important pour passer devant ses propres styles. */
+.leaflet-container { font-family: 'DM Sans', sans-serif; }
+.leaflet-control-zoom { border: 1px solid #e2e5dc !important; border-radius: 3px !important; box-shadow: 0 2px 10px #25352412 !important; }
+.leaflet-control-zoom a { color: #29372d !important; }
+.leaflet-control-attribution { font-size: 9px !important; }
+/* Marqueur de la position de l'utilisateur (créé dans app.js avec L.divIcon) :
+   un rond vert avec un contour blanc. */
+.user-marker { width: 22px; height: 22px; border: 3px solid white; border-radius: 50%; background: #16834b; box-shadow: 0 1px 9px #183a26aa; } /* Position GPS de l’utilisateur. */
+/* ::after crée un élément virtuel : ici un anneau fin autour du rond. */
+.user-marker::after { position: absolute; inset: -8px; border: 1px solid #16834b66; border-radius: 50%; content: ''; }
+
+/* ---------- 14. ACCESSIBILITÉ ---------- */
+/* Cache un élément à l'écran mais le laisse lisible par les lecteurs d'écran
+   (utilisé pour les <label> des champs de recherche). */
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+/* Contour jaune visible quand on navigue au clavier (touche Tab). */
+:focus-visible { outline: 3px solid #e3b63f; outline-offset: 3px; }
+
+/* ---------- 15. VERSION TÉLÉPHONE ---------- */
+/* @media = règles appliquées seulement si la condition est vraie.
+   Ici : écran de 760px de large ou moins. Le panneau passe AU-DESSUS de la carte. */
+@media (max-width: 760px) {
+  body { overflow: auto; } /* la page peut défiler */
+  .app-shell { display: flex; flex-direction: column; height: auto; min-height: 100dvh; }
+  .sidebar { order: 1; min-height: auto; padding: 19px 20px 16px; border-right: 0; } /* order: 1 = affiché en premier */
+  .brand-row { margin-bottom: 28px; }
+  .intro { margin-bottom: 18px; }
+  h1 { font-size: 27px; }
+  .location-panel { margin-top: 20px; }
+  .quick-places { margin-top: 20px; }
+  .sidebar-footer { margin-top: 18px; padding-top: 15px; }
+  .map-area { order: 2; min-height: 55vh; height: 55vh; flex: 0 0 55vh; } /* la carte prend 55 % de la hauteur de l'écran */
+  .map-topline { top: 12px; left: 12px; right: 12px; }
+  .map-caption { bottom: 13px; left: 12px; }
+  .map-zoom-hint { right: 12px; bottom: 18px; }
+}
+
+/* Très petits écrans (390px ou moins) : on réduit les marges et les textes. */
+@media (max-width: 390px) {
+  .sidebar { padding-right: 16px; padding-left: 16px; }
+  .map-coordinates { padding: 0 8px; font-size: 8px; }
+  .map-status { padding: 0 8px; font-size: 8px; }
+}
